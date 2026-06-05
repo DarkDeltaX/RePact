@@ -28,7 +28,7 @@ jobs:
 
       - name: Build Flutter Web
         # Replace 'resewit' below with your actual GitHub repository name
-        run: flutter build web --release --base-href "/Resewit/"
+        run: flutter build web --release --base-href "/RePact/"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
