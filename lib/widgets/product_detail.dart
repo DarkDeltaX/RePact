@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../brand_config.dart';
+import '../app_language.dart';
 
 class ProductDetailDialog extends StatefulWidget {
   final Product product;
@@ -85,7 +86,7 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
 
         // Price
         Text(
-          '\$${widget.product.price.toStringAsFixed(2)}',
+          AppLanguageProvider.of(context).formatPrice(widget.product.price, widget.product.egpPrice),
           style: theme.textTheme.headlineMedium?.copyWith(
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
@@ -141,13 +142,13 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
         const SizedBox(height: 16),
 
         // Description
-        Text('Product Details', style: theme.textTheme.titleMedium),
+        Text(AppLanguageProvider.of(context).t('materials'), style: theme.textTheme.titleMedium),
         const SizedBox(height: 6),
         Text(widget.product.description, style: theme.textTheme.bodyMedium),
         const SizedBox(height: 24),
 
         // Color selector
-        Text('Color: $_selectedColor', style: theme.textTheme.titleSmall),
+        Text('${AppLanguageProvider.of(context).t('colors')}: $_selectedColor', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 12,
@@ -180,7 +181,7 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
         const SizedBox(height: 20),
 
         // Size selector
-        Text('Size: $_selectedSize', style: theme.textTheme.titleSmall),
+        Text('${AppLanguageProvider.of(context).t('sizes')}: $_selectedSize', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 12,
@@ -239,7 +240,7 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
                 );
               },
               icon: const Icon(Icons.shopping_bag_outlined),
-              label: const Text('ADD TO CART'),
+              label: Text(AppLanguageProvider.of(context).t('add_to_cart').toUpperCase()),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 20),
               ),
@@ -313,7 +314,7 @@ class _ProductDetailDialogState extends State<ProductDetailDialog> {
                 child: IconButton(
                   icon: const Icon(Icons.close_rounded, size: 28),
                   onPressed: () => Navigator.of(context).pop(),
-                  tooltip: 'Close details',
+                  tooltip: AppLanguageProvider.of(context).t('close'),
                 ),
               ),
             ),

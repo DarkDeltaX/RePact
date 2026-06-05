@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../brand_config.dart';
+import '../app_language.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -24,7 +25,7 @@ class _ProductCardState extends State<ProductCard> {
 
     return Semantics(
       label:
-          'Product: ${widget.product.name}. Category: ${widget.product.category}. Price: \$${widget.product.price.toStringAsFixed(2)}. Materials: ${widget.product.materials}.',
+          'Product: ${widget.product.name}. Category: ${widget.product.category}. Price: ${AppLanguageProvider.of(context).formatPrice(widget.product.price, widget.product.egpPrice)}. Materials: ${widget.product.materials}.',
       hint:
           'Double tap or press enter to view detailed description and purchase options.',
       button: true,
@@ -155,7 +156,7 @@ class _ProductCardState extends State<ProductCard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '\$${widget.product.price.toStringAsFixed(2)}',
+                              AppLanguageProvider.of(context).formatPrice(widget.product.price, widget.product.egpPrice),
                               style: theme.textTheme.titleLarge?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,

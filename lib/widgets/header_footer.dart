@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../brand_config.dart';
+import '../app_language.dart';
+import 'language_switcher.dart';
 
 class BrandHeader extends StatelessWidget implements PreferredSizeWidget {
   final int cartItemCount;
@@ -107,41 +109,57 @@ class BrandHeader extends StatelessWidget implements PreferredSizeWidget {
 
             // Middle: Category Tabs (Desktop only)
             if (isDesktop)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: ['All', 'Modest Wear', 'Essentials', 'Knitwear'].map((
-                  cat,
-                ) {
-                  final isActive = activeCategory == cat;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Semantics(
-                      selected: isActive,
-                      button: true,
-                      label: 'Category tab: $cat',
-                      child: TextButton(
-                        onPressed: () => onCategoryChanged(cat),
-                        style: TextButton.styleFrom(
-                          foregroundColor: isActive
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.7,
-                                ),
-                        ),
-                        child: Text(
-                          cat.toUpperCase(),
-                          style: TextStyle(
-                            fontWeight: isActive
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            letterSpacing: 1.5,
-                            fontSize: 13,
+              Flexible(
+                flex: 3,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: ['All Products', 'Denim', 'Linen', 'Organic Cotton', 'Zero Waste Accessories'].map((
+                      cat,
+                    ) {
+                      final isActive = activeCategory == cat;
+                      
+                      // Map category to translation key
+                      String tKey = 'cat_all';
+                      if (cat == 'Denim') tKey = 'cat_denim';
+                      if (cat == 'Linen') tKey = 'cat_linen';
+                      if (cat == 'Organic Cotton') tKey = 'cat_cotton';
+                      if (cat == 'Zero Waste Accessories') tKey = 'cat_accessories';
+                      
+                      final translatedCat = AppLanguageProvider.of(context).t(tKey);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: Semantics(
+                          selected: isActive,
+                          button: true,
+                          label: 'Category tab: $cat',
+                          child: TextButton(
+                            onPressed: () => onCategoryChanged(cat),
+                            style: TextButton.styleFrom(
+                              foregroundColor: isActive
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.7,
+                                    ),
+                            ),
+                            child: Text(
+                              translatedCat.toUpperCase(),
+                              style: TextStyle(
+                                fontWeight: isActive
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                letterSpacing: 1.5,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
 
             if (isDesktop) const Spacer(),
@@ -156,7 +174,7 @@ class BrandHeader extends StatelessWidget implements PreferredSizeWidget {
                   child: TextField(
                     onChanged: onSearchChanged,
                     decoration: InputDecoration(
-                      hintText: 'Search products...',
+                      hintText: AppLanguageProvider.of(context).t('search_hint'),
                       hintStyle: TextStyle(
                         fontSize: 13,
                         color: theme.colorScheme.onSurface.withValues(
@@ -200,9 +218,14 @@ class BrandHeader extends StatelessWidget implements PreferredSizeWidget {
                       : Icons.dark_mode_rounded,
                 ),
                 onPressed: onThemeToggle,
-                tooltip: 'Toggle Theme',
+                tooltip: AppLanguageProvider.of(context).t('toggle_theme'),
               ),
             ),
+
+            const SizedBox(width: 8),
+
+            // Language Switcher
+            const LanguageSwitcher(),
 
             const SizedBox(width: 8),
 
@@ -324,7 +347,7 @@ class BrandFooter extends StatelessWidget {
                   : MainAxisAlignment.center,
               children: [
                 Text(
-                  '© ${DateTime.now().year} $brandName Atelier. All Rights Reserved.',
+                  AppLanguageProvider.of(context).t('footer_rights'),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (isDesktop)
@@ -360,7 +383,7 @@ class BrandFooter extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          brandTagline,
+          AppLanguageProvider.of(context).t('brand_tagline'),
           style: theme.textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
@@ -381,20 +404,22 @@ class BrandFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'SHOP SECTIONS',
+          AppLanguageProvider.of(context).t('footer_shop'),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
           ),
         ),
         const SizedBox(height: 16),
-        _buildFooterLink(context, 'All Products'),
+        _buildFooterLink(context, AppLanguageProvider.of(context).t('cat_all')),
         const SizedBox(height: 10),
-        _buildFooterLink(context, 'Modest Abayas & Hijabs'),
+        _buildFooterLink(context, AppLanguageProvider.of(context).t('cat_denim')),
         const SizedBox(height: 10),
-        _buildFooterLink(context, 'Organic Blouses & Jackets'),
+        _buildFooterLink(context, AppLanguageProvider.of(context).t('cat_linen')),
         const SizedBox(height: 10),
-        _buildFooterLink(context, 'Cable Knitwear'),
+        _buildFooterLink(context, AppLanguageProvider.of(context).t('cat_cotton')),
+        const SizedBox(height: 10),
+        _buildFooterLink(context, AppLanguageProvider.of(context).t('cat_accessories')),
       ],
     );
   }

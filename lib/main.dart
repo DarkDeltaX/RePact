@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_language.dart';
 import 'brand_config.dart';
 import 'brand_theme.dart';
 import 'widgets/product_card.dart';
@@ -19,6 +20,7 @@ class ClothingStoreApp extends StatefulWidget {
 
 class _ClothingStoreAppState extends State<ClothingStoreApp> {
   ThemeMode _themeMode = ThemeMode.light;
+  final AppLanguage _appLanguage = AppLanguage();
 
   void _toggleTheme() {
     setState(() {
@@ -30,15 +32,28 @@ class _ClothingStoreAppState extends State<ClothingStoreApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: brandName,
-      debugShowCheckedModeBanner: false,
-      theme: BrandTheme.lightTheme,
-      darkTheme: BrandTheme.darkTheme,
-      themeMode: _themeMode,
-      home: MainStorePage(
-        isDarkMode: _themeMode == ThemeMode.dark,
-        onThemeToggle: _toggleTheme,
+    return AppLanguageProvider(
+      language: _appLanguage,
+      child: ListenableBuilder(
+        listenable: _appLanguage,
+        builder: (context, _) {
+          return Directionality(
+            textDirection: _appLanguage.textDirection,
+            child: MaterialApp(
+              title: brandName,
+              debugShowCheckedModeBanner: false,
+              theme: BrandTheme.lightTheme,
+              darkTheme: BrandTheme.darkTheme,
+              themeMode: _themeMode,
+              home: SelectionArea(
+                child: MainStorePage(
+                  isDarkMode: _themeMode == ThemeMode.dark,
+                  onThemeToggle: _toggleTheme,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -60,15 +75,24 @@ class MainStorePage extends StatefulWidget {
 
 class _MainStorePageState extends State<MainStorePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ScrollController _secondLifeScrollController = ScrollController();
+  final ScrollController _mainCatalogScrollController = ScrollController();
   final List<CartItem> _cart = [];
-  String _activeCategory = 'All';
+  String _activeCategory = 'All Products';
   String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _secondLifeScrollController.dispose();
+    _mainCatalogScrollController.dispose();
+    super.dispose();
+  }
 
   // Filter products based on search query and category
   List<Product> get _filteredProducts {
     return productCatalog.where((product) {
       final matchesCategory =
-          _activeCategory == 'All' || product.category == _activeCategory;
+          _activeCategory == 'All Products' || product.category == _activeCategory;
       final matchesSearch =
           product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           product.materials.toLowerCase().contains(
@@ -241,7 +265,7 @@ class _MainStorePageState extends State<MainStorePage> {
                   ),
                   const Divider(),
                   // Categories Link
-                  ...['All', 'Modest Wear', 'Essentials', 'Knitwear'].map((
+                  ...['All Products', 'Denim', 'Linen', 'Organic Cotton', 'Zero Waste Accessories'].map((
                     cat,
                   ) {
                     final isActive = _activeCategory == cat;
@@ -294,6 +318,9 @@ class _MainStorePageState extends State<MainStorePage> {
             // 2. SUSTAINABILITY VALUE PROPOSITIONS BAR
             _buildSustainabilityProps(context),
 
+            // SECOND LIFE COLLECTION
+            _buildSecondLifeCollection(context),
+
             // 3. PRODUCT CATALOG GRID
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -311,9 +338,9 @@ class _MainStorePageState extends State<MainStorePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _activeCategory == 'All'
-                                ? 'THE COLLECTION'
-                                : _activeCategory.toUpperCase(),
+                            _activeCategory == 'All Products'
+                                ? AppLanguageProvider.of(context).t('section_trending')
+                                : AppLanguageProvider.of(context).t('cat_${_activeCategory.split(' ').last.toLowerCase()}').toUpperCase(),
                             style: theme.textTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               fontSize: isDesktop ? 30 : 24,
@@ -347,59 +374,53 @@ class _MainStorePageState extends State<MainStorePage> {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'No products matches your search.',
+                                  AppLanguageProvider.of(context).t('no_results'),
                                   style: theme.textTheme.titleMedium,
                                 ),
                               ],
                             ),
                           ),
                         )
-                      : LayoutBuilder(
-                          builder: (context, constraints) {
-                            // Responsive column counts
-                            int columns = 1;
-                            if (constraints.maxWidth > 1200) {
-                              columns = 4;
-                            } else if (constraints.maxWidth > 800) {
-                              columns = 3;
-                            } else if (constraints.maxWidth > 500) {
-                              columns = 2;
-                            }
-
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
+                      : SizedBox(
+                          height: 420,
+                          child: Scrollbar(
+                            controller: _mainCatalogScrollController,
+                            thumbVisibility: true,
+                            child: ListView.builder(
+                              controller: _mainCatalogScrollController,
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.only(bottom: 20.0),
                               itemCount: _filteredProducts.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: columns,
-                                    childAspectRatio: 0.68,
-                                    crossAxisSpacing: 24,
-                                    mainAxisSpacing: 32,
-                                  ),
                               itemBuilder: (context, index) {
                                 final product = _filteredProducts[index];
-                                return ProductCard(
-                                  product: product,
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return ProductDetailDialog(
-                                          product: product,
-                                          onAddToCart: _addToCart,
-                                        );
-                                      },
-                                    );
-                                  },
+                                return Container(
+                                  width: 260,
+                                  margin: const EdgeInsets.only(right: 24),
+                                  child: ProductCard(
+                                    product: product,
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return ProductDetailDialog(
+                                            product: product,
+                                            onAddToCart: _addToCart,
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
                                 );
                               },
-                            );
-                          },
+                            ),
+                          ),
                         ),
                 ],
               ),
             ),
+
+            // ABOUT US
+            _buildAboutUs(context),
 
             // 4. THE BRAND FOOTER
             const BrandFooter(),
@@ -479,7 +500,7 @@ class _MainStorePageState extends State<MainStorePage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    brandHeroTitle,
+                    AppLanguageProvider.of(context).t('hero_title'),
                     style: theme.textTheme.displayMedium?.copyWith(
                       fontSize: isMobile ? 26 : 34,
                       fontWeight: FontWeight.bold,
@@ -489,7 +510,7 @@ class _MainStorePageState extends State<MainStorePage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    brandHeroSubtitle,
+                    AppLanguageProvider.of(context).t('hero_subtitle'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: hexToColor(hexTextMutedLight),
                       fontSize: isMobile ? 13 : 15,
@@ -502,7 +523,7 @@ class _MainStorePageState extends State<MainStorePage> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          _activeCategory = 'All';
+                          _activeCategory = 'All Products';
                         });
                         // Smoothly scroll down to product grid
                         Scrollable.ensureVisible(
@@ -515,7 +536,7 @@ class _MainStorePageState extends State<MainStorePage> {
                         backgroundColor: hexToColor(hexPrimaryLight),
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('SHOP THE COLLECTION'),
+                      child: Text(AppLanguageProvider.of(context).t('hero_cta')),
                     ),
                   ),
                 ],
@@ -597,6 +618,169 @@ class _MainStorePageState extends State<MainStorePage> {
       child: isMobile
           ? Column(children: props.map((prop) => buildPropCard(prop)).toList())
           : Row(children: props.map((prop) => buildPropCard(prop)).toList()),
+    );
+  }
+
+  // Second Life Collection Section
+  Widget _buildSecondLifeCollection(BuildContext context) {
+    final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+    
+    final images = [
+      'assets/images/Second Life Collection (Line)1.jpeg',
+      'assets/images/Second Life Collection (Line)2.jpeg',
+      'assets/images/Second Life Collection (Line)3.jpeg',
+      'assets/images/Second Life Collection (Line)5.jpeg',
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 60.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              AppLanguageProvider.of(context).t('section_second_life'),
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: size.width > 900 ? 30 : 24,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              AppLanguageProvider.of(context).t('second_life_desc'),
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 380, // slightly larger to accommodate scrollbar
+            child: Scrollbar(
+              controller: _secondLifeScrollController,
+              thumbVisibility: true,
+              child: ListView.builder(
+                controller: _secondLifeScrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 20.0),
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 550, // Increased width for landscape images
+                    margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: AssetImage(images[index]),
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // About Us Section
+  Widget _buildAboutUs(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      color: theme.colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 80.0),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLanguageProvider.of(context).t('section_about'),
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                AppLanguageProvider.of(context).t('about_mission_body'),
+                style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+              ),
+              const SizedBox(height: 40),
+              _buildAboutItem(context, AppLanguageProvider.of(context).t('about_vision_title'), AppLanguageProvider.of(context).t('about_vision_body')),
+              const SizedBox(height: 24),
+              _buildAboutItem(context, AppLanguageProvider.of(context).t('about_mission_title'), AppLanguageProvider.of(context).t('about_mission_body')),
+              const SizedBox(height: 40),
+              Text(
+                AppLanguageProvider.of(context).t('about_values_title'),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildCoreValueItem(context, AppLanguageProvider.of(context).t('value_sustainability'), 'We are committed to minimizing environmental impact through responsible sourcing, sustainable materials, and eco-friendly production processes.'),
+              _buildCoreValueItem(context, AppLanguageProvider.of(context).t('value_quality'), 'We strive to deliver durable, comfortable, and high-quality products that meet customer expectations.'),
+              _buildCoreValueItem(context, AppLanguageProvider.of(context).t('value_integrity'), 'We operate with transparency, honesty, and ethical business practices throughout our supply chain.'),
+              _buildCoreValueItem(context, AppLanguageProvider.of(context).t('value_customer'), 'We aim to understand and meet the evolving needs of environmentally conscious consumers.'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutItem(BuildContext context, String title, String content) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          content,
+          style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCoreValueItem(BuildContext context, String value, String description) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check_circle_outline, color: theme.colorScheme.primary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                children: [
+                  TextSpan(
+                    text: '$value: ',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: description),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

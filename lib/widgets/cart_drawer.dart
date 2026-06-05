@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../brand_config.dart';
+import '../app_language.dart';
 
 // Represents an item added to the shopping cart
 class CartItem {
@@ -16,6 +17,7 @@ class CartItem {
   });
 
   double get total => product.price * quantity;
+  double get egpTotal => product.egpPrice * quantity;
 }
 
 class CartDrawer extends StatelessWidget {
@@ -38,8 +40,13 @@ class CartDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Calculate subtotal
+    // Calculate subtotals
+    final lang = AppLanguageProvider.of(context);
     double subtotal = cartItems.fold(0, (sum, item) => sum + item.total);
+    double egpSubtotal = cartItems.fold(0, (sum, item) => sum + item.egpTotal);
+    final subtotalDisplay = lang.isArabic
+        ? 'ج.م ${egpSubtotal.toStringAsFixed(0)}'
+        : '€${subtotal.toStringAsFixed(2)}';
 
     return Drawer(
       child: SafeArea(
@@ -61,7 +68,7 @@ class CartDrawer extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Your Bag',
+                        AppLanguageProvider.of(context).t('cart_title'),
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -94,7 +101,7 @@ class CartDrawer extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Your bag is empty',
+                            AppLanguageProvider.of(context).t('cart_empty'),
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.5,
@@ -136,13 +143,13 @@ class CartDrawer extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Subtotal',
+                          AppLanguageProvider.of(context).t('cart_subtotal'),
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
-                          '\$${subtotal.toStringAsFixed(2)}',
+                          subtotalDisplay,
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -158,11 +165,11 @@ class CartDrawer extends StatelessWidget {
                     const SizedBox(height: 20),
                     Semantics(
                       label:
-                          'Proceed to checkout. Total order value: \$${subtotal.toStringAsFixed(2)}',
+                          'Proceed to checkout. Total order value: $subtotalDisplay',
                       button: true,
                       child: ElevatedButton(
                         onPressed: onCheckout,
-                        child: const Text('PROCEED TO CHECKOUT'),
+                        child: Text(AppLanguageProvider.of(context).t('checkout').toUpperCase()),
                       ),
                     ),
                   ],
@@ -279,7 +286,9 @@ class CartDrawer extends StatelessWidget {
 
                   // Item Total Price
                   Text(
-                    '\$${item.total.toStringAsFixed(2)}',
+                    AppLanguageProvider.of(context).isArabic
+                        ? 'ج.م ${item.egpTotal.toStringAsFixed(0)}'
+                        : '€${item.total.toStringAsFixed(2)}',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
